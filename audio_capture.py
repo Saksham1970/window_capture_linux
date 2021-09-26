@@ -25,17 +25,21 @@ def get_raw_audio_data(target):
         return None
 
 def raw_PCM_to_wav(rawBufferStream , duration , filename):
+    fps = 44100
+    channels = 2
+    depth = 2
     data= b""
     now = time.time()
+ 
     for line in rawBufferStream:
-        if time.time() > now+duration:
+        if len(data) > fps*channels*depth*duration:
             break
-        data += line        
-    
+        data += line       
+   
     with wave.open(f"{filename}.wav", "wb") as out_f:
-        out_f.setnchannels(1)
-        out_f.setsampwidth(2) # number of bytes
-        out_f.setframerate(87900)
+        out_f.setnchannels(channels)
+        out_f.setsampwidth(depth) 
+        out_f.setframerate(fps)
         out_f.writeframesraw(data)
 
 

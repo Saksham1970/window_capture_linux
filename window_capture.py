@@ -1,10 +1,13 @@
 from moviepy.editor import *
 import os
 from threading import Thread
+import pathlib
+
+dir = pathlib.Path(__file__).parent.resolve()
 def vc():
-    os.system("python3 /home/lakshay/PycharmProjects/SakshamTestProject/video_capture.py")
+    os.system(f'python3 {os.path.join(dir,"video_capture.py")}')
 def ac():
-    os.system("python3 /home/lakshay/PycharmProjects/SakshamTestProject/audio_capture.py")
+    os.system(f'python3 {os.path.join(dir,"audio_capture.py")}')
 t1 = Thread(target = vc) 
 t2 = Thread(target = ac)
 
