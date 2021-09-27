@@ -2,14 +2,15 @@ from moviepy.editor import *
 import os
 from threading import Thread
 import pathlib
-
+import audio_capture
+import settings
 dir = pathlib.Path(__file__).parent.resolve()
+
 def vc():
     os.system(f'python3 {os.path.join(dir,"video_capture.py")}')
-def ac():
-    os.system(f'python3 {os.path.join(dir,"audio_capture.py")}')
+
 t1 = Thread(target = vc) 
-t2 = Thread(target = ac)
+t2 = Thread(target = audio_capture.record_audio_wav,args=(settings.target_search,settings.duration,"sound"))
 
 
 t1.start()

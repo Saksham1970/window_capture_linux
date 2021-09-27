@@ -11,7 +11,7 @@ from PIL import Image
 import numpy as np
 import cv2
 
-class Video_Window():
+class Window():
     def __init__(self,x_id):
         self._x_id = x_id
         gdk_display = GdkX11.X11Display.get_default()
@@ -132,7 +132,7 @@ class Video_Window():
         return open_cv_image
 
 if __name__ == "__main__":
-    chrome = Video_Window.fromTitle("chrome")
-    chrome = chrome[0]
-    chrome.icon_PIL.show()
+    chrome = Window.fromTitle("chrome")
+    for chromewin in chrome:
+        print(chromewin.icon_name)
     

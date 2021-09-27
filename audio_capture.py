@@ -7,53 +7,63 @@ target_search = settings.target_search
 duration = settings.duration
 pulse = pulsectl.Pulse('my-client-name')
 
-def get_raw_audio_data(target):
-
+def sinkInputList_by_applicationName(applicationName):
+    sinkInputList = []
     for sinkInput in pulse.sink_input_list():
-        if target_search in sinkInput.proplist["application.name"].lower():
-            global index
-            index = sinkInput.index
-            break
-    else:
-        index = None
+        if applicationName in sinkInput.proplist["application.name"].lower():
+            sinkInputList.append(sinkInput)
+    return sinkInputList
 
-    if index:
-        sp = subprocess.Popen(["parec", "--raw", f"--monitor-stream={index}" ], stdout= subprocess.PIPE,stderr= subprocess.PIPE)
-        out = sp.stdout
-        return out , sp
-    else:
-        return None
+def get_raw_audio_data(sinkInput, fps = 44100, channels = 2, depth = 2):
+    dtd = {
+        1: "u8",
+        2: "s16ne",
+        3: "s24ne",
+        4: "s32ne"
+    }
 
-def raw_PCM_to_wav(rawBufferStream , duration , filename):
-    fps = 44100
-    channels = 2
-    depth = 2
+    index = sinkInput.index
+    sp = subprocess.Popen(["parec", "--raw", f"--monitor-stream={index}", f"--rate={fps}", f"--channels={channels}", f"--format={dtd[depth]}"], stdout= subprocess.PIPE,stderr= subprocess.PIPE)
+    rawAudioBuffer = sp.stdout
+    return rawAudioBuffer , sp
+
+def AudioBuffer_to_data(rawAudioBuffer , duration , fps = 44100, channels = 2, depth = 2):
     data= b""
-    now = time.time()
- 
-    for line in rawBufferStream:
+    
+    for line in rawAudioBuffer:
         if len(data) > fps*channels*depth*duration:
             break
         data += line       
-   
+    return data
+
+def PCM_to_wav(data , filename, fps = 44100, channels = 2, depth = 2):
     with wave.open(f"{filename}.wav", "wb") as out_f:
         out_f.setnchannels(channels)
         out_f.setsampwidth(depth) 
         out_f.setframerate(fps)
         out_f.writeframesraw(data)
 
-
-if __name__ == "__main__":
+def record_audio_wav(application_name, duration, filename,fps = 44100, channels = 2, depth = 2):
     now = time.time()
+    data = b""
     while True:
-        raw_audio_tuple = get_raw_audio_data(target_search)
-        if raw_audio_tuple:    
+        sink_input_list = sinkInputList_by_applicationName(application_name)
+        if sink_input_list:    
             print("got audio")
-            rawBufferStream, subproc = raw_audio_tuple
+            sink_input = sink_input_list[0]
+            AudioBuffer, subproc = get_raw_audio_data(sink_input,fps,channels,depth)
             break
         elif time.time() > now+duration:
-            print(duration, "expired")
-            raise TimeoutError
-    duration = duration - (time.time() - now)
-    raw_PCM_to_wav(rawBufferStream, duration,"sound")
-    subproc.terminate()
+            data = b"\0"*int(fps*channels*depth*duration)
+            break
+    if not data:
+        duration_left = duration - (time.time() - now)
+        data = b"\0"*int(fps*channels*depth*(duration-duration_left)) + AudioBuffer_to_data(AudioBuffer,duration_left,fps,channels,depth)
+        subproc.terminate()
+    
+    PCM_to_wav(data,filename,fps,channels,depth)
+
+
+
+if __name__ == "__main__":
+    record_audio_wav("chrome",10,"sound")

@@ -1,5 +1,5 @@
 import cv2
-from video import Video_Window
+from window import Window
 
 import time
 import settings
@@ -17,10 +17,10 @@ def save_video(window,video_name,duration,fps):
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
     
     time_taken = time.time() -now
-    minimum_fps = (1/time_taken)/2
-    if minimum_fps < fps:
-        fps = minimum_fps
-        print("video fps limiting factor:", minimum_fps)
+    maximum_fps = (1/time_taken)/2
+    if maximum_fps < fps:
+        fps = maximum_fps
+        print("video fps limiting factor:", maximum_fps)
     video = cv2.VideoWriter(video_name, fourcc, fps, (width,height))    
     video.write(frame)
     now2 = now + 1/fps 
@@ -36,10 +36,9 @@ def save_video(window,video_name,duration,fps):
             video.write(frame)
    
 if __name__ == "__main__":
-
     now = time.time()
     while True:
-        window= Video_Window.fromTitle(target_search)
+        window= Window.fromTitle(target_search)
         if window:    
             print("got window")
             window = window[0]
