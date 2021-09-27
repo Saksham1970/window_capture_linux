@@ -7,6 +7,9 @@ from gi.repository import GdkX11
 gi.require_version('Wnck', '3.0')
 from gi.repository import Wnck
 
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+
 from PIL import Image
 import numpy as np
 import cv2
@@ -24,6 +27,8 @@ class Window():
         title = title.lower()
         scr = Wnck.Screen.get_default()
         scr.force_update()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
         windows = scr.get_windows()
         active_wspace = scr.get_active_workspace()
         x_ids = []
@@ -132,7 +137,9 @@ class Window():
         return open_cv_image
 
 if __name__ == "__main__":
-    chrome = Window.fromTitle("chrome")
-    for chromewin in chrome:
-        print(chromewin.icon_name)
+    
+    while True:
+        chrome = Window.fromTitle("chrome")
+        chrome =chrome[0]
+        print(chrome.title)
     

@@ -43,7 +43,8 @@ def PCM_to_wav(data , filename, fps = 44100, channels = 2, depth = 2):
         out_f.setframerate(fps)
         out_f.writeframesraw(data)
 
-def record_audio_wav(application_name, duration, filename,fps = 44100, channels = 2, depth = 2):
+
+def record_audio_data(application_name, duration, fps = 44100, channels = 2, depth = 2):
     now = time.time()
     data = b""
     while True:
@@ -54,16 +55,24 @@ def record_audio_wav(application_name, duration, filename,fps = 44100, channels 
             AudioBuffer, subproc = get_raw_audio_data(sink_input,fps,channels,depth)
             break
         elif time.time() > now+duration:
-            data = b"\0"*int(fps*channels*depth*duration)
+            data = b"\x00"*int(fps*channels*depth*duration)
             break
     if not data:
         duration_left = duration - (time.time() - now)
-        data = b"\0"*int(fps*channels*depth*(duration-duration_left)) + AudioBuffer_to_data(AudioBuffer,duration_left,fps,channels,depth)
+        silence = b"\x00"*int(fps*channels*depth*(duration-duration_left)) 
+        data = silence +  AudioBuffer_to_data(AudioBuffer,duration_left,fps,channels,depth)[1:]
         subproc.terminate()
-    
+    return data
+
+def record_audio_wav(application_name, duration, filename,fps = 44100, channels = 2, depth = 2):
+
+    data = record_audio_data(application_name, duration,fps, channels, depth)
     PCM_to_wav(data,filename,fps,channels,depth)
 
-
+def record_sink_to_wav(sink_input,duration,filename,fps = 44100, channels =2, depth = 2):
+    ab,sp = get_raw_audio_data(sink_input,fps,channels,depth)
+    data = AudioBuffer_to_data(ab,duration,fps,channels,depth)
+    PCM_to_wav(data,filename,fps,channels,depth)
 
 if __name__ == "__main__":
     record_audio_wav("chrome",10,"sound")
